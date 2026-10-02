@@ -248,6 +248,12 @@ h2{
     </div>
   </section>
 
+  <!-- Featured project -->
+  <section aria-labelledby="h-proj">
+    <h2 id="h-proj">projects</h2>
+    <div class="grid" id="projects"></div>
+  </section>
+
   <!-- Releases pulled live from GitHub -->
   <section aria-labelledby="h-rel">
     <h2 id="h-rel">releases</h2>
@@ -302,6 +308,17 @@ const CONFIG = {
   installers: [
     { name: "SideStore", scheme: "sidestore://install?url={url}" },
     { name: "AltStore",  scheme: "altstore://install?url={url}" }
+  ],
+
+  // Featured projects with a fixed IPA. Pressing Install hands the IPA URL to the sideloading app.
+  projects: [
+    {
+      name: "ZMjailbreaky", version: "ios 26.6.2-27 bd 7", icon: "shield",
+      desc: "Unsigned nightly build (10 beta). Your sideloading app signs it during install.",
+      file: "zmjailbreaky-10-beta-nightly-unsigned.ipa",
+      repo: "ZMjailbreaky", repoUrl: "https://github.com/zmtzxh/ZMjailbreaky",
+      ipa: "https://github.com/zmtzxh/ZMjailbreaky/releases/download/ja1lbreak/zmjailbreaky-10-beta-nightly-unsigned.ipa"
+    }
   ],
 
   socials: [
@@ -423,12 +440,25 @@ function releaseCard({ repo, rel }, i) {
      <a class="label" href="${esc(rel.html_url)}" target="_blank" rel="noopener noreferrer">View release notes on GitHub ${ARROW}</a>`);
 }
 
+function projectCard(p, i) {
+  const installs = CONFIG.installers.map((b, n) =>
+    `<a class="btn ${n ? "soft" : "primary"}" href="${esc(b.scheme.replace("{url}", encodeURIComponent(p.ipa)))}" aria-label="Install ${esc(p.name)} with ${esc(b.name)}">Install with ${esc(b.name)}</a>`).join("");
+  return el("article", { class: "card rel pop", style: `--r:${tilt(i)};--i:${order++}` },
+    `<div class="top"><span class="icon" aria-hidden="true">${glyph(p.icon)}</span>
+       <div><h3>${esc(p.name)}</h3><span class="label">${esc(p.version)}</span></div></div>
+     <p>${esc(p.desc)}</p>
+     <div class="asset"><div class="label">${esc(p.file)}</div>
+       <div class="row">${installs}<a class="btn soft" href="${esc(p.ipa)}" rel="noopener noreferrer">Download IPA</a></div></div>
+     <a class="label" href="${esc(p.repoUrl)}" target="_blank" rel="noopener noreferrer">View on GitHub ${ARROW}</a>`);
+}
+CONFIG.projects.forEach((p, i) => $("#projects").appendChild(projectCard(p, i)));
+
 (async function initReleases() {
   const note = $("#relNote");
   try {
-    const data = (await loadReleases()).sort((a, b) => new Date(b.rel.published_at) - new Date(a.rel.published_at));
+    const data = (await loadReleases()).filter(d => !CONFIG.projects.some(p => p.repo === d.repo.name)).sort((a, b) => new Date(b.rel.published_at) - new Date(a.rel.published_at));
     if (!data.length) {
-      note.textContent = "No releases published yet. Check back soon.";
+      note.textContent = "No other releases published yet. Check back soon.";
       $("#liveValue").textContent = "no releases yet"; $("#liveLabel").textContent = "Checked GitHub just now";
       return;
     }

